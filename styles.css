@@ -82,7 +82,7 @@ body {
     --edit-form-input-text: #e0e0e0;
     --edit-form-input-focus: #4ade80;
     --starwars-bg: #000;
-    --starwars-text: #ffd700;
+    --starwars-text: #39ff14;
     --starwars-content-bg: #000;
     --countdown-text: #7c8aff;
     --countdown-shadow: #7c8aff;
@@ -730,17 +730,17 @@ body.starwars-bg {
     text-align: center;
     line-height: 2.5;
     letter-spacing: 3px;
-    color: #ffd700;
+    color: #39ff14;
 }
 
 .starwars-chunk {
     margin: 1.5rem 0;
-    color: #ffd700;
+    color: #39ff14;
 }
 
 .controls { z-index: 100; position: relative; }
 
-.mode-card[data-mode="starwars"] .mode-icon { color: #ffd700; font-size: 2rem; }
+.mode-card[data-mode="starwars"] .mode-icon { color: #39ff14; font-size: 2rem; }
 
 /* Texts Modal Styles */
 .saved-text-item {
