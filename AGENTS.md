@@ -1,14 +1,25 @@
 # AGENTS.md — Guía para Implementación del Proyecto
 
-## Descripcin
+## Descripción
 
-Entrenador de Lectura Veloz: aplicacin web (HTML/CSS/JS vanilla) para practicar lectura rpida con 4 modos de entrenamiento, configuracin avanzada y seguimiento de estadsticas.
+Entrenador de Lectura Veloz: aplicación web (HTML/CSS/JS vanilla) para practicar lectura rápida con 4 modos de entrenamiento, configuración avanzada y seguimiento de estadísticas.
 
-## Progreso y estadsticas
+## Estado actual (2026-09-19)
+
+**✅ COMPLETADO:**
+- 4 modos funcionales: Palabra por palabra, Palabras en grupo, Frases completas, Estrella Wars
+- Arquitectura modular: 4 motores separados + coordinador (app.js)
+- Modo Star Wars: scroll ascendente, texto dorado (#ffd700), fondo negro, WPM en tiempo real, grupos adaptativos (máx 25 chars, 5 palabras)
+- Responsive móvil: modales, controles, Star Wars, visual customizer (≤640px)
+- Tests: 27/27 unitarios + JSDOM runtime test
+- Git: `main` (producción/GitHub Pages) / `dev` (desarrollo local)
+- GitHub Pages: https://phylossopho.github.io/proyecto_LECTURA_VELOZ/
+
+## Progreso y estadísticas
 
 ### Archivo progress.json
 
-Ubicacin: `proyecto_LECTURA_VELOZ/progress.json`
+Ubicación: `proyecto_LECTURA_VELOZ/progress.json`
 
 Estructura:
 ```json
@@ -21,63 +32,31 @@ Estructura:
 }
 ```
 
-- `sessions`: nmero de sesiones completadas
-- `totalWords`: total de palabras leidas
-- `totalTime`: tiempo acumulado en segundos
-- `bestWPM`: mayor velocidad alcanzada
-- `history`: historial detallado de cada sesin (se agrega futuramente)
-
-### Estadsticas en pantalla
-
-Al terminar cada sesin, se actualizan automticamente:
-- Se registra la sesin en `trainingStats`
-- Se guarda en `localStorage` bajo clave `reading-stats`
-- Se muestra en el modal de configuracin del engranaje
-
-## Modales
-
-### Modal de configuracin (engranaje ⚙)
-
-Accesible desde el icono en la barra superior. Ventana compacta sin campos de texto:
-- Botn "Cerrar" (abajo a la izquierda)
-- Botn "Config rápido" (abajo a la derecha)
-- Botones de tema (Oscuro/Neón/Claro)
-- Botones de tamaño (Pequeño/Mediano/Grande)
-
-Se cierra con el botn "Cerrar", click fuera o presionando Escape.
-
-### Modal "Config rápido" (#quick-modal)
-
-Accesible desde el botn "Config rápido" en la barra superior (siempre visible al inicio):
-- Slider WPM (50-600)
-- Tamao de chunk (3/5/7)
-- Color de fondo, resaltado y texto
-
-### Botón "Editar texto" (✏)
-
-Ubicado en la barra superior (top-bar). Abre el modal de configuración con el texto actual cargado para edición.
-
 ## Estructura del proyecto
 
 ```
 proyecto_LECTURA_VELOZ/
-  index.html          ← Estructura DOM, referencia CSS/JS
-  styles.css          ← Estilos (3 temas + responsive + animaciones)
-  app.js              ← Coordinador principal (estado compartido, flujo global)
-  mode-word.js        ← Motor modo palabra por palabra (RSVP)
-  mode-chunk.js       ← Motor modo palabras en grupo (chunking)
-  mode-line.js        ← Motor modo frases completas
-  mode-starwars.js    ← Motor modo Estrella Wars (scroll ascendente)
-  test_app.js         ← Tests unitarios (Node.js)
-  progress.json       ← Estadsticas de entrenamiento (plantilla)
+  index.html              ← Estructura DOM, referencia CSS/JS
+  styles.css              ← Estilos (3 temas + responsive + animaciones)
+  app.js                  ← Coordinador principal (estado compartido, flujo global)
+  mode-word.js            ← Motor modo palabra por palabra (RSVP)
+  mode-chunk.js           ← Motor modo palabras en grupo (chunking)
+  mode-line.js            ← Motor modo frases completas
+  mode-starwars.js        ← Motor modo Estrella Wars (scroll ascendente)
+  test_app.js             ← Tests unitarios (Node.js)
+  test_runtime.js         ← JSDOM smoke test
+  test_starwars_debug.js  ← Debug Star Wars en JSDOM
+  progress.json           ← Estadísticas de entrenamiento (plantilla)
+  historia_prehistoria.json ← Textos de historia para práctica
   notas-lectura-veloz.md
   README.md
   AGENTS.md
+  prompt.txt              ← Prompt para próximas sesiones
 ```
 
 ## Arquitectura de motores
 
-Cada modo de prctica tiene su propio archivo JS ("motor"). `app.js` es el coordinador que mantiene el estado compartido (variables globales, DOM, eventos) y delega las operaciones especficas de cada modo a su motor correspondiente.
+Cada modo de práctica tiene su propio archivo JS ("motor"). `app.js` es el coordinador que mantiene el estado compartido (variables globales, DOM, eventos) y delega las operaciones específicas de cada modo a su motor correspondiente.
 
 Los motores se cargan en `index.html` antes que `app.js` (funciones globales disponibles por hoisting):
 
@@ -86,15 +65,13 @@ Los motores se cargan en `index.html` antes que `app.js` (funciones globales dis
 | Palabra por palabra | `mode-word.js` | `renderWordDisplay`, `scheduleWordNext` |
 | Palabras en grupo | `mode-chunk.js` | `renderChunkDisplay`, `scheduleChunkNext` |
 | Frases completas | `mode-line.js` | `renderLineDisplay`, `updateLineTimer`, `scheduleLineNext` |
-| Estrella Wars | `mode-starwars.js` | `splitStarWarsGroups`, `renderStarWarsDisplay`, `startStarWarsAnimation`, `animateStarWars`, `pauseStarWars`, `resumeStarWars`, `clearStarWarsPresentation`, etc. |
+| Estrella Wars | `mode-starwars.js` | `splitStarWarsGroups`, `renderStarWarsDisplay`, `startStarWarsAnimation`, `animateStarWars`, `pauseStarWars`, `resumeStarWars`, `clearStarWarsPresentation`, `getStarWarsDuration`, `showCountdownNumber`, `hideCountdownNumber`, `escapeHtml` |
 
-`app.js` coordina mediante delegacin: `renderDisplay()` llama al render del motor activo, `togglePause()` llama al pause/resume del motor, y el handler de teclado delega el avance a cada motor.
-
-Esto permite modificar un modo sin afectar a los dems.
+`app.js` coordina mediante delegación: `renderDisplay()` llama al render del motor activo, `togglePause()` llama al pause/resume del motor, y el handler de teclado delega el avance a cada motor.
 
 ## Flujo de desarrollo
 
-Los algoritmos de procesamiento de texto (agrupación, chunking, splitting) se desarrollan y prueban primero en **Python**. Cuando la lógica produce grupos correctos en Python con múltiples textos de prueba, se porta fielmente a JS en el archivo del modo correspondiente. Esto evita iterar a ciegas en el navegador.
+Los algoritmos de procesamiento de texto (agrupación, chunking, splitting) se desarrollan y prueban primero en **Python** (`C:\Users\Jorge\AppData\Local\Temp\kilo\starwars_algo.py`). Cuando la lógica produce grupos correctos en Python con múltiples textos de prueba, se porta fielmente a JS en el archivo del modo correspondiente. Esto evita iterar a ciegas en el navegador.
 
 ## Flujo de ejecución
 
@@ -102,9 +79,9 @@ Los algoritmos de procesamiento de texto (agrupación, chunking, splitting) se d
 1. Abrir index.html en navegador
 2. Carga preferencias desde localStorage (tema, WPM, chunk size, modo, font size)
 3. Modal "Selecciona método" → usuario elige modo (word/chunk/line/starwars)
-4. Modal "Configurar Texto" → usuario pega texto o elige ejemplo
-5. Sesin activa con controles de velocidad y avance
-6. Al terminar → pantalla "Fin!" + registro de estadsticas en localStorage
+4. Modal "Configurar Texto" → usuario pega texto, carga archivo .txt/.md, o elige ejemplo
+5. Sesión activa con controles de velocidad y avance
+6. Al terminar → pantalla "Fin!" + registro de estadísticas en localStorage
 ```
 
 ## Modelo de estado clave
@@ -125,6 +102,9 @@ isRunning / isPaused
 pausedDuration    // tiempo acumulado en pausas
 chunkPauseMs      // micro-pausa variable según puntuación
 trainingStats     // { sessions, totalWords, totalTime, bestWPM }
+starWarsGroups[]  // grupos de texto para modo Star Wars
+starWarsOffset    // posición actual scroll
+starWarsPhase     // fase animación: countdown/pre-scroll/scroll/fadeout
 ```
 
 ## Preferencias en localStorage
@@ -132,9 +112,9 @@ trainingStats     // { sessions, totalWords, totalTime, bestWPM }
 | Clave | Valor |
 |---|---|
 | `reading-theme` | 'dark' \| 'neon' \| 'light' |
-| `reading-wpm` | nmero (50-600) |
+| `reading-wpm` | número (50-600) |
 | `reading-chunkSize` | 3 \| 5 \| 7 |
-| `reading-mode` | 'word' \| 'chunk' \| 'line' | 'starwars' |
+| `reading-mode` | 'word' \| 'chunk' \| 'line' \| 'starwars' |
 | `reading-fontSize` | 'small' \| 'medium' \| 'large' |
 | `reading-stats` | JSON { sessions, totalWords, totalTime, bestWPM } |
 
@@ -142,9 +122,9 @@ trainingStats     // { sessions, totalWords, totalTime, bestWPM }
 
 ### Coordinador (`app.js`)
 
-| Funcin | Propsito |
+| Función | Propósito |
 |---|---|
-| `startReading()` | Inicia sesin según modo, delega al motor |
+| `startReading()` | Inicia sesión según modo, delega al motor |
 | `togglePause()` | Pausa/reanuda, delega pause/resume al motor |
 | `resetReading()` | Reinicia todo, limpia estado del motor activo |
 | `finishReading()` | Termina sesión, limpia motor y registra stats |
@@ -158,17 +138,18 @@ trainingStats     // { sessions, totalWords, totalTime, bestWPM }
 | `setChunk(size)` | Cambia chunk size |
 | `loadPreferences()` / `savePreferences()` | Persistencia de configuración |
 | `setTheme(theme)` / `setFontSize(size)` / `setColor(type)` | Configuración visual |
+| `backToModeSelection()` | Vuelve al selector de modo |
+| `loadFileText(event)` | Carga archivo .txt/.md |
+| `loadSample(idx)` / `loadHistory(key)` | Carga textos de ejemplo |
 
 ### Motores de modo
 
-| Motor | Archivo | Funciones |
+| Motor | Archivo | Funciones clave |
 |---|---|---|
 | Palabra por palabra | `mode-word.js` | `renderWordDisplay`, `scheduleWordNext` |
 | Palabras en grupo | `mode-chunk.js` | `renderChunkDisplay`, `scheduleChunkNext` |
 | Frases completas | `mode-line.js` | `renderLineDisplay`, `updateLineTimer`, `scheduleLineNext` |
-| Estrella Wars | `mode-starwars.js` | `renderStarWarsDisplay`, `startStarWarsAnimation`, `animateStarWars`, `pauseStarWars`, `resumeStarWars`, `clearStarWarsPresentation`, `splitStarWarsGroups`, `getStarWarsDuration` |
-
-### Modal / configuración
+| Estrella Wars | `mode-starwars.js` | `splitStarWarsGroups`, `renderStarWarsDisplay`, `startStarWarsAnimation`, `animateStarWars`, `pauseStarWars`, `resumeStarWars`, `clearStarWarsPresentation`, `getStarWarsDuration` |
 
 ## Funciones testeables (test_app.js)
 
@@ -187,63 +168,52 @@ Ejecutar: `node test_app.js` → debe mostrar `27/27 tests passed`
 
 Los tests de `test_app.js` cubren solo funciones compartidas (utilidades, chunking, formato). Las funciones específicas de modo (ej. `splitStarWarsGroups`) se prueban en **Python** antes de portar a JS.
 
-## Técnicas implementadas
+## Modo Estrella Wars — Detalles técnicos
 
-- Chunking inteligente — grupos de 3-7 palabras separados por puntuación
-- Meta Guiding — pointer `|` con animación de respiración
-- Contexto visual — 4 niveles de opacidad (100%, 60%, 40%, 20%)
-- Colores personalizados por tema (fondo, resaltado, texto)
-- Micro-pausas variables — 200ms normal, 350ms coma, 300ms lista, 600ms punto final
-- Flexbox gap para separación de palabras (arreglo crítico)
-- `.chunk-box` — contenedor con borde y fondo alrededor de TODO el chunk en modo grupo
-- `.chunk-word` — clase uniforme para TODAS las palabras del chunk (sin resaltado individual)
-- Colores personalizados por tema (fondo, resaltado, texto)
+- **Algoritmo agrupación**: máx 25 chars, máx 5 palabras, mín 10 chars por grupo
+- **Fusión grupos cortos**: tolerancia +10 chars
+- **Animación**: 4 fases - countdown(3s) → pre-scroll(2.5s, ease-out cúbico) → scroll(WPM) → fadeout(1s)
+- **Scroll**: desde abajo (offset negativo grande) → centro → arriba
+- **Velocidad**: proporcional a WPM, slider funciona en tiempo real
+- **Teclado**: Space/Enter/flechas no cambian modo en Star Wars
 
-## Temas disponibles
+## Responsive móvil (≤640px)
 
-| Tema | Fondo | Acento principal |
+- Modales: 95vw, scroll, padding ajustado
+- Controles: sliders 100%, botones chunk flexibles
+- Star Wars: fuente 1.8rem, line-height 2, letter-spacing 1px
+- Visual customizer: toolbar wrap, panel 50vh
+- Stats: wrap, fuente menor
+- Sample texts: 1 columna
+
+## Tests
+
+```bash
+node test_app.js        # 27/27 unit tests
+node test_runtime.js    # JSDOM smoke test
+node test_starwars_debug.js  # Debug Star Wars en JSDOM
+```
+
+## Flujo de trabajo Git
+
+| Rama | Propósito | Despliegue |
 |---|---|---|
-| Oscuro (default) | #0f0f1a | #7c8aff (azul) |
-| Neón | #050510 | #00d4ff (cyan) |
-| Claro | #d8d8d8 | #4a5ac7 (azul suave) |
+| `main` | Producción (estable) | GitHub Pages automático |
+| `dev` | Desarrollo/pruebas locales | Solo local |
 
-## Modos de práctica
-
-| Modo | Descripción | Para quién |
-|---|---|---|
-| Palabra por palabra | RSVP con pointer | Máxima velocidad |
-| Palabras en grupo | 3-7 palabras con puntuación | Velocidad + comprensión |
-| Frases completas | Frase visible, avance automático | Lectura natural a ritmo |
-| Estrella Wars | Texto dorado subiendo desde abajo | Diversión y entrenamiento visual |
-
-## Slider WPM
-
-Mnimo 50 (para niños de primaria), máximo 600.
-
-## Micro-pausas por puntuación
-
-| Signo final | Pausa |
-|---|---|
-| Punto, signos de pregunta/exclamación | 600ms |
-| Coma, punto y coma | 350ms |
-| Dos puntos | 300ms |
-| Sin puntuación | 200ms |
+**Pasar a producción:**
+1. `git checkout dev` → verifica en local
+2. `git checkout main`
+3. `git merge dev`
+4. GitHub Desktop → `Push origin`
 
 ## Problemas conocidos
 
-- **Modo grupo — visibilidad de chunk-box**: se implement `.chunk-box` como contenedor visible alrededor del chunk. Verificar en navegador real si todas las palabras son visibles y resaltadas correctamente.
-- **Tema claro**: fondo `#d8d8d8`, texto `#2a2a2a`. `setColor('bg')` guarda color por tema y afecta solo ese tema.
+- **Tema claro**: fondo `#d8d8d8`, texto `#2a2a2a`. `setColor('bg')` guarda color por tema.
+- **Brave**: puede requerir desactivar escudos para localStorage en file:// (funciona en GitHub Pages)
 
-## Posibles mejoras futuras
+## Próximos pasos
 
-- [ ] Pausas proporcionales según longitud de oración (modo line)
-- [ ] Detección automática de puntuación en modos word/chunk
-- [ ] Compartir estadísticas entre dispositivos
-- [ ] Modo child-friendly con interfaz más colorida y recompensas
-- [ ] Modo skimming (leer títulos/subtítulos rápidamente)
-- [ ] Importar texto desde archivo .txt
-- [ ] Crear lista de palabras difíciles para repasar
-- [ ] Animación de pointer más suave (requestAnimationFrame)
-- [ ] Soporte para idiomas con acentos (actualmente usa texto sin tildes)
-- [ ] Sincronización de estadísticas en servidor
-- [ ] Dashboard de progreso con gráficos
+- [ ] Ajustar font-size Star Wars si grupos de 25 chars siguen amplios en algunas pantallas
+- [ ] Verificar visual customizer en móvil
+- [ ] Probar carga de archivos .txt/.md en tablet/celular

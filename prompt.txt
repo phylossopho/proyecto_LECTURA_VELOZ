@@ -1,0 +1,51 @@
+# Prompt para próximas sesiones - Entrenador de Lectura Veloz
+
+## Proyecto
+**Entrenador de Lectura Veloz** (`proyecto_LECTURA_VELOZ`)
+Ubicación: `C:\Users\Jorge\Downloads\Documentos que usaré\proyecto_LECTURA_VELOZ`
+
+## Estado actual (2026-09-19)
+
+### ✅ COMPLETADO
+- 4 modos funcionales: Palabra por palabra, Palabras en grupo, Frases completas, **Estrella Wars**
+- Arquitectura modular: 4 motores separados + coordinador (app.js)
+- **Modo Star Wars**: scroll ascendente, texto dorado (#ffd700), fondo negro, WPM en tiempo real, grupos adaptativos (máx 25 chars, 5 palabras)
+- Responsive móvil: modales, controles, Star Wars, visual customizer (≤640px)
+- Tests: 27/27 unitarios + JSDOM runtime test + debug Star Wars
+- Git: `main` (producción/GitHub Pages) / `dev` (desarrollo local)
+- GitHub Pages: https://phylossopho.github.io/proyecto_LECTURA_VELOZ/
+
+### Arquitectura
+```
+index.html → mode-word.js → mode-chunk.js → mode-line.js → mode-starwars.js → app.js
+styles.css (3 temas + responsive)
+app.js = coordinador (estado, DOM, modales, flujo global, teclado)
+mode-*.js = motores independientes
+```
+
+### Flujo de desarrollo
+**Python primero → JS después**: Algoritmos de texto se desarrollan y prueban en Python (`C:\Users\Jorge\AppData\Local\Temp\kilo\starwars_algo.py`), luego se portan a JS. Evita iterar a ciegas en navegador.
+
+## Tests
+```bash
+node test_app.js           # 27/27 unit tests
+node test_runtime.js       # JSDOM smoke test
+node test_starwars_debug.js # Debug Star Wars en JSDOM
+```
+
+## Git workflow
+- `main` = producción → GitHub Pages automático
+- `dev` = desarrollo local
+- Para deploy: `git checkout dev` → verifica → `git checkout main` → `git merge dev` → GitHub Desktop Push
+
+## Qué probar en siguiente sesión
+1. Modo Star Wars en tablet/celular (550 WPM, texto historia)
+2. Visual customizer en móvil
+3. Carga de archivos .txt/.md en tablet
+4. Ajustar font-size Star Wars si grupos de 25 chars siguen amplios
+
+## Archivos clave
+- `AGENTS.md` - Esta guía completa
+- `prompt.txt` - Este archivo (actualizar cada sesión)
+- `mode-starwars.js` - Motor Star Wars (algoritmo verificado en Python)
+- `starwars_algo.py` - Prototipo Python para agrupación
