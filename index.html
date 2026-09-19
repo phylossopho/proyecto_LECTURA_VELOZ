@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrenador de Lectura Veloz</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div class="top-bar">
+        <h1>Lectura Veloz</h1>
+        <div style="display:flex;align-items:center;gap:12px;">
+            <div class="stats">
+                <div>Progreso: <span id="word-counter">0 / 0</span></div>
+                <div>Tiempo: <span id="elapsed-time">0:00</span></div>
+            </div>
+            <button class="settings-btn" onclick="openVisualCustomizer()" title="Personalizar colores" id="btn-visual-customize">🎨</button>
+            <button class="settings-btn" onclick="openSettings()" title="Configuración">&#9881;</button>
+        </div>
+    </div>
+
+    <div class="main-area">
+        <div class="mode-badge" id="mode-badge" style="display:none;"></div>
+        <div class="word-display" id="word-display">
+            <span>Prepara tu texto y haz clic en Iniciar</span>
+        </div>
+        <div class="line-timer-bar" id="line-timer-bar" style="display:none;">
+            <div class="line-timer-fill" id="line-timer-fill"></div>
+        </div>
+        <div class="pause-indicator" id="pause-indicator">PAUSADO</div>
+    </div>
+
+    <div class="controls">
+        <div class="control-row">
+            <button class="btn btn-primary" id="btn-start" onclick="startReading()" disabled>Iniciar</button>
+            <button class="btn btn-secondary" id="btn-pause" onclick="togglePause()" disabled>Pausa</button>
+            <button class="btn btn-secondary" id="btn-reset" onclick="resetReading()">Reiniciar</button>
+        </div>
+        <div class="control-row">
+            <div class="slider-group">
+                <label>Velocidad</label>
+                <input type="range" id="wpm-slider" min="50" max="600" value="250" step="10" oninput="updateWPM()">
+                <div class="wpm-value" id="wpm-display">250</div>
+                <label>WPM</label>
+            </div>
+            <div class="slider-group">
+                <button class="btn btn-secondary" onclick="adjustWPM(-20)" style="padding:6px 12px;font-size:0.85rem;">-</button>
+                <button class="btn btn-secondary" onclick="adjustWPM(20)" style="padding:6px 12px;font-size:0.85rem;">+</button>
+            </div>
+        </div>
+        <div class="control-row" id="chunk-row">
+            <div class="slider-group">
+                <label>Palabras por grupo:</label>
+                <div class="chunk-options">
+                    <button class="chunk-opt" data-chunk="3" onclick="setChunk(3)">3</button>
+                    <button class="chunk-opt active" data-chunk="5" onclick="setChunk(5)">5</button>
+                    <button class="chunk-opt" data-chunk="7" onclick="setChunk(7)">7</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="mode-modal">
+        <div class="modal">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <h2 style="margin:0;">Selecciona tu método de práctica</h2>
+                <button class="settings-btn" onclick="openSettings()" title="Configuración" style="padding:6px 10px;">&#9881;</button>
+            </div>
+            <div class="modal-section">
+                <label>Elige cómo quieres practicar:</label>
+                <div class="mode-cards">
+                    <div class="mode-card" data-mode="word" onclick="selectMode('word')">
+                        <div class="mode-icon">|</div>
+                        <div class="mode-name">Palabra por palabra</div>
+                        <div class="mode-desc">Las palabras aparecen una a una con puntero visual. Máxima velocidad de procesamiento.</div>
+                        <div class="mode-when">Para: velocidad pura</div>
+                    </div>
+                    <div class="mode-card" data-mode="chunk" onclick="selectMode('chunk')">
+                        <div class="mode-icon">O</div>
+                        <div class="mode-name">Palabras en grupo</div>
+                        <div class="mode-desc">Lee grupos de 3-7 palabras separados por comas y puntos. Respetan la puntuación.</div>
+                        <div class="mode-when">Para: velocidad + comprensión</div>
+                    </div>
+                    <div class="mode-card" data-mode="line" onclick="selectMode('line')">
+                        <div class="mode-icon">=</div>
+                        <div class="mode-name">Frases completas</div>
+                        <div class="mode-desc">Lees la frase completa visible en pantalla. Avance automático según velocidad.</div>
+                        <div class="mode-when">Para: lectura natural a ritmo</div>
+                    </div>
+                    <div class="mode-card" data-mode="starwars" onclick="selectMode('starwars')">
+                        <div class="mode-icon">↑</div>
+                        <div class="mode-name">Estrella Wars</div>
+                        <div class="mode-desc">El texto sube desde abajo como en la introducción de Star Wars. Modo juego.</div>
+                        <div class="mode-when">Para: diversión y entrenamiento visual</div>
+                    </div>
+                    <div class="mode-card" data-mode="texts" onclick="selectMode('texts')">
+                        <div class="mode-icon">📝</div>
+                        <div class="mode-name">Textos</div>
+                        <div class="mode-desc">Crea, edita y elimina tus propios textos de práctica. Biblioteca personal.</div>
+                        <div class="mode-when">Para: gestionar contenido</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="goToTextConfig()">Siguiente: Configurar texto</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="config-modal">
+        <div class="modal">
+            <h2 style="margin:0 0 20px;">Configurar Texto</h2>
+            <div class="modal-section">
+                <label>Texto para practicar:</label>
+                <textarea id="input-text" placeholder="Pega o escribe el texto que quieres practicar aquí..."></textarea>
+            </div>
+            <div class="modal-section">
+                <label>O carga un archivo de texto:</label>
+                <input type="file" id="file-input" accept=".txt,.md" style="width:100%;padding:8px;background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:6px;color:var(--text-primary);" onchange="loadFileText(event)">
+            </div>
+            <div class="modal-section">
+                <label>O elige un texto de ejemplo:</label>
+                <div class="sample-texts">
+                    <button class="sample-btn" onclick="loadSample(0)">Párrafo corto</button>
+                    <button class="sample-btn" onclick="loadSample(1)">Ciencia</button>
+                    <button class="sample-btn" onclick="loadSample(2)">Ciudad</button>
+                    <button class="sample-btn" onclick="loadSample(3)">Motivación</button>
+                    <button class="sample-btn" onclick="loadSample(4)">Naturaleza</button>
+                    <button class="sample-btn" onclick="loadSample(5)">Tecnología</button>
+                </div>
+            </div>
+            <div class="modal-section">
+                <label>O lee sobre historia:</label>
+                <div class="sample-texts">
+                    <button class="sample-btn" onclick="loadHistory('primeros_seres_humanos')">Primeros seres humanos</button>
+                    <button class="sample-btn" onclick="loadHistory('vida_nomada')">Vida nómada</button>
+                    <button class="sample-btn" onclick="loadHistory('nomadismo_sedentarismo')">Sedentarismo</button>
+                </div>
+            </div>
+            <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center;">
+                <button class="btn btn-secondary" onclick="backToModeSelection()" style="padding:6px 12px;font-size:0.8rem;">← Atrás</button>
+                <button class="btn btn-primary" onclick="startWithConfig()">Empezar a leer</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="texts-modal">
+        <div class="modal" style="width:520px;max-height:85vh;overflow-y:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <h2 style="margin:0;">Mis Textos de Práctica</h2>
+                <button class="btn btn-secondary" onclick="closeTextsModal()" style="padding:6px 14px;font-size:0.85rem;">Cerrar</button>
+            </div>
+            <div class="modal-section" style="margin-bottom:8px;">
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <input type="text" id="texts-search" placeholder="Buscar por palabra o tema..." style="flex:1;padding:8px 12px;background:#2a2a4a;border:1px solid #3a3a5a;border-radius:6px;color:#e0e0e0;font-size:0.9rem;outline:none;" oninput="filterTextsList()">
+                    <select id="texts-category-filter" onchange="filterTextsList()" style="padding:8px 12px;background:#2a2a4a;border:1px solid #3a3a5a;border-radius:6px;color:#e0e0e0;font-size:0.9rem;outline:none;">
+                        <option value="">Todas las categorías</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-section">
+                <label>Crear nuevo texto:</label>
+                <div style="display:flex;gap:8px;margin-bottom:8px;">
+                    <input type="text" id="new-text-title" placeholder="Título del texto" style="flex:1;padding:8px 12px;background:#2a2a4a;border:1px solid #3a3a5a;border-radius:6px;color:#e0e0e0;font-size:0.9rem;outline:none;">
+                    <button class="btn btn-primary" onclick="createNewText()" style="padding:8px 16px;">Crear</button>
+                </div>
+                <select id="new-text-category" style="width:100%;padding:8px 12px;background:#2a2a4a;border:1px solid #3a3a5a;border-radius:6px;color:#e0e0e0;font-size:0.9rem;outline:none;margin-bottom:8px;">
+                    <option value="Personal">Personal</option>
+                    <option value="Muestra">Muestra</option>
+                    <option value="Historia">Historia</option>
+                    <option value="Ciencia">Ciencia</option>
+                    <option value="Tecnologia">Tecnología</option>
+                    <option value="Naturaleza">Naturaleza</option>
+                    <option value="Motivacion">Motivación</option>
+                    <option value="Ciudad">Ciudad</option>
+                    <option value="Otro">Otro...</option>
+                </select>
+                <textarea id="new-text-content" placeholder="Escribe o pega tu texto aquí..." style="width:100%;height:120px;background:#0f0f1a;border:1px solid #2a2a4a;border-radius:8px;color:#e0e0e0;padding:12px;font-size:0.9rem;font-family:inherit;resize:vertical;outline:none;"></textarea>
+                <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end;">
+                    <button class="btn btn-secondary" onclick="cancelNewText()" style="padding:6px 16px;font-size:0.8rem;">Cancelar</button>
+                    <button class="btn btn-primary" onclick="saveNewText()" style="padding:6px 16px;font-size:0.8rem;">Guardar</button>
+                </div>
+            </div>
+            <div class="modal-section">
+                <label>Textos guardados:</label>
+                <div id="saved-texts-list" style="max-height:300px;overflow-y:auto;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="settings-modal">
+        <div class="modal" style="width:420px;max-height:85vh;overflow-y:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <h2 style="margin:0;">Configuración</h2>
+                <button class="btn btn-secondary" onclick="closeSettings()" style="padding:6px 14px;font-size:0.85rem;">Cerrar</button>
+            </div>
+            <div class="settings-modal" style="padding:10px 0;">
+                <div class="setting-row">
+                    <span class="setting-label">Tema:</span>
+                    <div class="font-options">
+                        <button class="font-opt" data-theme="dark" onclick="setTheme('dark')">Oscuro</button>
+                        <button class="font-opt" data-theme="neon" onclick="setTheme('neon')">Neon</button>
+                        <button class="font-opt" data-theme="light" onclick="setTheme('light')">Claro</button>
+                    </div>
+                </div>
+                <div class="setting-row" style="border-bottom:none;">
+                    <span class="setting-label">Texto:</span>
+                    <div class="font-options">
+                        <button class="font-opt" data-size="small" onclick="setFontSize('small')">Pequeño</button>
+                        <button class="font-opt" data-size="medium" onclick="setFontSize('medium')">Mediano</button>
+                        <button class="font-opt" data-size="large" onclick="setFontSize('large')">Grande</button>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-label">Velocidad:</span>
+                    <input type="range" id="settings-wpm-slider" min="50" max="600" value="250" step="10" oninput="quickWPMChange(this.value)" style="width:140px;-webkit-appearance:none;height:5px;border-radius:3px;background:#4a4a6a;outline:none;">
+                    <span class="setting-value" id="settings-wpm">250</span>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-label">Grupo:</span>
+                    <div class="font-options">
+                        <button class="font-opt" data-cs="3" onclick="setChunkSize(3)">3</button>
+                        <button class="font-opt" data-cs="5" onclick="setChunkSize(5)">5</button>
+                        <button class="font-opt" data-cs="7" onclick="setChunkSize(7)">7</button>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-label">Fondo:</span>
+                    <input type="color" id="settings-bg" onchange="setColor('bg',this.value)" style="width:40px;height:28px;border:none;cursor:pointer;background:none;">
+                    <span class="setting-label" style="margin-left:8px;">Resaltar:</span>
+                    <input type="color" id="settings-hl" onchange="setColor('hl',this.value)" style="width:40px;height:28px;border:none;cursor:pointer;background:none;">
+                </div>
+                <div class="setting-row">
+                    <span class="setting-label">Texto:</span>
+                    <input type="color" id="settings-text-color" onchange="setColor('text',this.value)" style="width:40px;height:28px;border:none;cursor:pointer;background:none;">
+                </div>
+                <div class="setting-row" style="border-bottom:none;">
+                    <span class="setting-label">Editor de temas:</span>
+                    <button class="btn btn-secondary" onclick="openThemeEditor()" style="padding:6px 16px;font-size:0.85rem;">Abrir editor</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="theme-editor-modal">
+        <div class="modal theme-editor-container" style="width:1120px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <h2 style="margin:0;">Editor de Temas</h2>
+                <button class="btn btn-secondary" onclick="closeThemeEditor()" style="padding:6px 14px;font-size:0.85rem;">Cerrar</button>
+            </div>
+            <div class="theme-editor-layout" style="display:flex;flex:1;overflow:hidden;">
+                <div class="theme-editor-panel" style="flex:1;max-width:560px;overflow-y:auto;padding-right:16px;">
+                    <div style="display:flex;gap:8px;margin-bottom:16px;justify-content:center;">
+                        <button class="theme-tab-btn active" data-theme="dark" onclick="selectThemeTab('dark')">Oscuro</button>
+                        <button class="theme-tab-btn" data-theme="neon" onclick="selectThemeTab('neon')">Neon</button>
+                        <button class="theme-tab-btn" data-theme="light" onclick="selectThemeTab('light')">Claro</button>
+                    </div>
+                    <div id="theme-editor-content"></div>
+                    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:16px;border-top:1px solid var(--border-color);">
+                        <button class="btn btn-secondary" onclick="resetThemeToDefaults()">Restablecer</button>
+                        <button class="btn btn-primary" onclick="saveThemeEditor()">Guardar cambios</button>
+                    </div>
+                </div>
+                <div class="theme-preview-panel" id="theme-preview-panel" style="flex:1;max-width:560px;background:var(--bg-primary);border-left:1px solid var(--border-color);display:flex;flex-direction:column;overflow:hidden;">
+                    <div style="padding:12px 16px;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-weight:600;color:var(--accent-primary);">Vista Previa en Vivo</span>
+                        <select id="preview-mode-select" onchange="updateThemePreview()" style="padding:4px 8px;border-radius:4px;border:1px solid var(--border-color);background:var(--input-bg);color:var(--input-text);font-size:0.75rem;">
+                            <option value="overview">Resumen general</option>
+                            <option value="reading">Modo lectura</option>
+                            <option value="modal">Modal configuración</option>
+                            <option value="all">Todas las variables</option>
+                        </select>
+                    </div>
+                    <div id="theme-preview-content" style="flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;align-items:center;gap:16px;"></div>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:16px;border-top:1px solid var(--border-color);">
+                <button class="btn btn-secondary" onclick="resetThemeToDefaults()">Restablecer</button>
+                <button class="btn btn-primary" onclick="saveThemeEditor()">Guardar cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="visual-customizer-modal" style="pointer-events:none;">
+        <div class="visual-customizer-toolbar" style="position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:12px;padding:12px 20px;display:flex;align-items:center;gap:16px;z-index:2002;box-shadow:0 8px 32px rgba(0,0,0,0.3);pointer-events:auto;">
+            <span style="font-weight:600;color:var(--accent-primary);font-size:0.9rem;">Modo Personalización Visual</span>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-secondary" onclick="toggleVisualInspect()" id="btn-toggle-inspect" style="padding:6px 12px;font-size:0.8rem;">🔍 Inspeccionar: OFF</button>
+                <button class="btn btn-secondary" onclick="exitVisualCustomizer()" style="padding:6px 12px;font-size:0.8rem;">Salir</button>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;margin-left:16px;padding-left:16px;border-left:1px solid var(--border-color);">
+                <span style="font-size:0.75rem;color:var(--text-secondary);">Elemento:</span>
+                <span id="visual-inspect-target" style="font-size:0.75rem;font-weight:600;color:var(--accent-primary);font-family:monospace;min-width:200px;">Pasa ratón sobre elementos</span>
+            </div>
+        </div>
+        <div class="visual-customizer-panel hidden" id="visual-customizer-panel" style="position:fixed;bottom:16px;right:16px;width:360px;max-height:70vh;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:12px;padding:16px;overflow-y:auto;z-index:2002;box-shadow:0 8px 32px rgba(0,0,0,0.3);pointer-events:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <span style="font-weight:600;color:var(--accent-primary);">Propiedades de color</span>
+                <button onclick="document.getElementById('visual-customizer-panel').classList.add('hidden')" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:1.2rem;">×</button>
+            </div>
+            <div id="visual-customizer-props"></div>
+        </div>
+        <div class="visual-highlight" id="visual-highlight" style="position:fixed;pointer-events:none;z-index:2000;border:2px dashed var(--accent-primary);border-radius:4px;background:rgba(124,138,255,0.1);display:none;transition:all 0.1s ease;"></div>
+    </div>
+
+    <script src="mode-word.js"></script>
+    <script src="mode-chunk.js"></script>
+    <script src="mode-line.js"></script>
+    <script src="mode-starwars.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
