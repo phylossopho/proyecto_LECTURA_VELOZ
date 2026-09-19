@@ -631,6 +631,33 @@ body.font-large .word-display { font-size: 1.25em; }
     .top-bar { flex-direction: column; gap: 6px; text-align: center; }
     .control-row { flex-wrap: wrap; }
     .slider-group input[type="range"] { width: 100px; }
+    
+    /* Modals responsive */
+    .modal { width: 95vw; max-width: 95vw; padding: 20px; margin: 10px; max-height: 90vh; }
+    .modal-overlay { padding: 10px; }
+    .sample-texts { grid-template-columns: 1fr; gap: 8px; }
+    .sample-btn { text-align: center; }
+    
+    /* Controls */
+    .controls { padding: 16px; }
+    .control-row { gap: 12px; }
+    .slider-group { width: 100%; justify-content: space-between; }
+    .slider-group input[type="range"] { width: 100%; max-width: 200px; }
+    .chunk-options { width: 100%; justify-content: center; }
+    .chunk-opt { flex: 1; max-width: 80px; }
+    
+    /* Star Wars mode */
+    .word-display.starwars-display { padding: 10px; }
+    .starwars-content { font-size: 1.8rem; line-height: 2; letter-spacing: 1px; }
+    .starwars-chunk { margin: 1rem 0; }
+    
+    /* Visual customizer */
+    .visual-customizer-toolbar { flex-wrap: wrap; gap: 8px; padding: 10px; top: 10px; left: 10px; right: 10px; transform: none; width: auto; }
+    .visual-customizer-toolbar > div { width: 100%; justify-content: center; }
+    #visual-customizer-panel { width: calc(100% - 20px); left: 10px; right: 10px; bottom: 10px; max-height: 50vh; font-size: 0.8rem; }
+    
+    /* Stats */
+    .stats { flex-wrap: wrap; gap: 12px; font-size: 0.8rem; }
 }
 
 @keyframes fadeIn {
@@ -799,12 +826,6 @@ body.starwars-bg {
 .theme-light .saved-text-edit-form textarea { background: #f8f8f8; border-color: var(--btn-secondary-text); color: #1a1a1a; }
 .theme-light .saved-text-edit-form input:focus,
 .theme-light .saved-text-edit-form textarea:focus { border-color: #1a7a3a; }
-
-@media (max-width: 640px) {
-    .mode-cards { grid-template-columns: 1fr; }
-    .saved-text-item { flex-direction: column; align-items: flex-start; gap: 8px; }
-    .saved-text-actions { margin-left: 0; width: 100%; justify-content: flex-end; }
-}
 
 .theme-tab-btn {
     padding: 8px 16px;
